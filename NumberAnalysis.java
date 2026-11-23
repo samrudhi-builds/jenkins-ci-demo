@@ -1,13 +1,15 @@
-// NumberAnalysis.java
-import java.math.BigInteger;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.math.BigInteger;
 
 public class NumberAnalysis {
+    private static final int MAX_FACTORIAL_INPUT = 1_000;
+
     public static void main(String[] args) throws IOException {
-        if (args.length < 1) {
+        if (args.length == 0) {
             System.err.println("Usage: java NumberAnalysis <num> [outputFile]");
             System.exit(2);
+            return;
         }
 
         int num;
@@ -19,53 +21,71 @@ public class NumberAnalysis {
             return;
         }
 
-        String outFile = args.length >= 2 ? args[1] : null;
-        StringBuilder sb = new StringBuilder();
-        sb.append("Input Number: ").append(num).append("\n");
+        if (num > MAX_FACTORIAL_INPUT) {
+            System.err.println("Maximum factorial input is " + MAX_FACTORIAL_INPUT
+                    + ". Received: " + num);
+            System.exit(2);
+            return;
+        }
+
+        String primeResult = num + (isPrime(num)
+                ? " is a Prime number\n"
+                : " is NOT a Prime number\n");
+
+        StringBuilder report = new StringBuilder();
+        report.append("Input Number: ").append(num).append('\n');
 
         if (num < 0) {
-            sb.append("Factorial: Not defined for negative numbers\n");
+            report.append("Factorial: Not defined for negative numbers\n");
+            report.append(primeResult);
         } else {
             BigInteger factorial = BigInteger.ONE;
-            for (int i = 2; i <= num; i++) factorial = factorial.multiply(BigInteger.valueOf(i));
-            sb.append("Factorial = ").append(factorial.toString()).append("\n");
+            for (int i = 2; i <= num; i++) {
+                factorial = factorial.multiply(BigInteger.valueOf(i));
+            }
 
-            // Sum of digits of factorial (interesting extra metric)
-            int sumDigits = 0;
-            for (char c : factorial.toString().toCharArray()) sumDigits += (c - '0');
-            sb.append("SumOfDigitsOfFactorial = ").append(sumDigits).append("\n");
+            String factorialDigits = factorial.toString();
+            int digitSum = 0;
+            for (int i = 0; i < factorialDigits.length(); i++) {
+                digitSum += factorialDigits.charAt(i) - '0';
+            }
+
+            report.append("Factorial = ").append(factorialDigits).append('\n');
+            report.append("SumOfDigitsOfFactorial = ").append(digitSum).append('\n');
+            report.append(primeResult);
+            report.append("DigitsInFactorial = ").append(factorialDigits.length()).append('\n');
         }
 
-        // Prime check (fast/simple)
-        boolean isPrime = isPrime(num);
-        sb.append(isPrime ? (num + " is a Prime number\n") : (num + " is NOT a Prime number\n"));
-
-        // Extra metric: number of digits in factorial (shows big-int handling)
-        if (num >= 0) {
-            BigInteger factLen = BigInteger.ONE;
-            for (int i = 2; i <= num; i++) factLen = factLen.multiply(BigInteger.valueOf(i));
-            sb.append("DigitsInFactorial = ").append(factLen.toString().length()).append("\n");
-        }
-
-        String output = sb.toString();
+        String output = report.toString();
         System.out.println(output);
 
-        if (outFile != null) {
-            try (FileWriter fw = new FileWriter(outFile)) {
-                fw.write(output);
+        if (args.length >= 2) {
+            String outputFile = args[1];
+            try (FileWriter writer = new FileWriter(outputFile)) {
+                writer.write(output);
             }
-            System.out.println("Results saved to " + outFile);
+            System.out.println("Results saved to " + outputFile);
         }
     }
 
-    private static boolean isPrime(int n) {
-        if (n <= 1) return false;
-        if (n <= 3) return true;
-        if (n % 2 == 0) return false;
-        int r = (int)Math.sqrt(n);
-        for (int i = 3; i <= r; i += 2) if (n % i == 0) return false;
+    private static boolean isPrime(int num) {
+        if (num <= 1) {
+            return false;
+        }
+        if (num <= 3) {
+            return true;
+        }
+
+        if (num % 2 == 0) {
+            return false;
+        }
+
+        int limit = (int) Math.sqrt(num);
+        for (int divisor = 3; divisor <= limit; divisor += 2) {
+            if (num % divisor == 0) {
+                return false;
+            }
+        }
         return true;
     }
 }
-
-//Adding a comment to test 
